@@ -1,0 +1,132 @@
+<div class="layui-header" style="background-color:black">
+    <div class="layui-logo">通用后台管理系统</div>
+    <!-- 头部区域（可配合layui已有的水平导航） -->
+    <!--<ul class="layui-nav layui-layout-left">
+        <li class="layui-nav-item"><a href="">控制台</a></li>
+        <li class="layui-nav-item"><a href="">商品管理</a></li>
+        <li class="layui-nav-item">
+            <a href="javascript:;">其它系统</a>
+            <dl class="layui-nav-child">
+                <dd><a href="">邮件管理</a></dd>
+                <dd><a href="">消息管理</a></dd>
+                <dd><a href="">授权管理</a></dd>
+            </dl>
+        </li>
+    </ul>-->
+    <ul class="layui-nav layui-layout-right">
+        <li class="layui-nav-item">
+            <a href="javascript:;">
+                <img src="../../images/face.jpg" class="layui-nav-img">
+                wonder4work
+            </a>
+            <dl class="layui-nav-child">
+                <dd><a href="">基本资料</a></dd>
+                <dd><a href="">安全设置</a></dd>
+            </dl>
+        </li>
+        <li class="layui-nav-item"><a href="#" onclick="app.logout()">退出登录</a></li>
+    </ul>
+</div>
+
+<div class="layui-side layui-bg-black">
+    <div class="layui-side-scroll">
+        <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+        <ul class="layui-nav layui-nav-tree"  lay-filter="permissionList" id="permissionTree">
+            <li class="layui-nav-item layui-nav-itemed">
+                <a class="" href="javascript:;">会员管理</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="javascript:;">用户管理</a></dd>
+                    <dd><a href="javascript:;">角色管理</a></dd>
+                    <dd><a href="javascript:;">权限管理</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item">
+                <a href="javascript:;">网站管理</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="javascript:;">流量统计</a></dd>
+                    <dd><a href="javascript:;">登录日志</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item"><a href="javascript:;">系统设置</a></li>
+            <li class="layui-nav-item"><a href="javascript:;">相关文档</a></li>
+        </ul>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    $(function () {
+        var permissionsCookie = app.getCookie("permissionTree");
+        var userCookie = app.getCookie("user");
+
+        if (userCookie != null && userCookie != undefined && userCookie != '') {
+            var userInfoStr = decodeURIComponent(userCookie);
+            if (userInfoStr != null && userInfoStr != undefined && userInfoStr != '') {
+                var userInfo = JSON.parse(userInfoStr);
+                // 判断是否是一个对象
+                if ( typeof(userInfo)  == "object" ) {
+                    app.userIsLogin = true;
+                    console.log(userInfo);
+                    app.userInfo = userInfo;
+                } else {
+                    app.userIsLogin = false;
+                    app.userInfo = {};
+                    alert("你还没登录")
+                    window.location.href = "../../login.html"
+                }
+            }
+        } else {
+            app.userIsLogin = false;
+            app.userInfo = {};
+            alert("你还没登录")
+            window.location.href = "../../login.html"
+        }
+
+        // 只做了二级菜单 可以自己扩展
+        if (permissionsCookie != null && permissionsCookie != undefined && permissionsCookie != '') {
+            var permissionsStr = decodeURIComponent(permissionsCookie);
+            if (permissionsStr != null && permissionsStr != undefined && permissionsStr != '') {
+                var permissionTree = JSON.parse(permissionsStr);
+                // 判断是否是一个对象
+                if ( typeof(permissionTree)  == "object" ) {
+                    console.log(permissionTree)
+                    var html = "";
+                    permissionTree[0].children.forEach(function (item) {
+
+                        if (typeof(item)  == "object" &&item !=null && item.type==1){
+
+                            html += '<li class="layui-nav-item layui-nav-itemed">';
+                            html += '<a class="" href="javascript:;">'+item.name+'</a>';
+                            html += '<dl class="layui-nav-child">';
+
+                            item.children.forEach((child)=>{
+                                if (child.type==1){
+                                    html += '<dd><a href="'+child.url+'">'+child.name+'</a></dd>';
+                                }
+                            });
+
+                            html += '</dl>';
+                            html += '</li>';
+                        } else if(item.type==1){
+                            html += '<li class="layui-nav-item layui-nav-itemed">';
+                            html += '<a class="" href="javascript:;">'+item.name+'</a>';
+                            html += '</li>';
+                        }else{
+
+                        }
+                    });
+
+                    $("#permissionTree").html(html);
+
+                } else {
+                    // console.log(permissions)
+                }
+            }
+        } else {
+            // console.log(permissions)
+        }
+
+
+    });
+
+</script>

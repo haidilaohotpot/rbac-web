@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>通用后台管理系统</title>
+    <link rel="stylesheet" href="../../layui/css/layui.css">
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="header">
+
+    </div>
+
+    <div class="layui-body">
+        <blockquote class="layui-elem-quote layui-text">
+            <strong><span style="color: red">鉴于安全考虑，请牢记输入的密码！成功提交后将不显示！</span></strong>
+        </blockquote>
+
+        <form class="layui-form" action=""  lay-filter="example">
+            <div class="layui-form-item">
+                <label class="layui-form-label">用户名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="username" lay-verify="required|username" autocomplete="off" placeholder="请输入用户名" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">昵称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="nickname" lay-verify="required|username" autocomplete="off" placeholder="请输入昵称" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">密码</label>
+                <div class="layui-input-block">
+                    <input type="password" name="password" lay-verify="required|pass" placeholder="请输入密码" autocomplete="off" class="layui-input">
+                <span id="passtip" style="color:red;" hidden>默认赋值密码：123456</span>
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">性别</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="sex" value="1" title="男" >
+                    <input type="radio" name="sex" value="0" title="女">
+                    <input type="radio" name="sex" value="2" title="保密" checked="">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">验证手机</label>
+                    <div class="layui-input-inline">
+                        <input type="tel" name="mobile" lay-verify="required|phone" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">验证邮箱</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="email" lay-verify="required|email" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="button" class="layui-btn layui-btn-normal" id="LAY-component-form-setval">赋值</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    <button type="button" onclick="window.location.href='index.html'" class="layui-btn layui-btn-primary">返回用户列表</button>
+                    <button type="submit" class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+                    <!--<button type="button" class="layui-btn layui-btn-normal" id="LAY-component-form-getval">取值</button>-->
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © wonder4work.com - 系统后台管理模板
+    </div>
+</div>
+<script src="../../layui/layui.js"></script>
+<script src="../../js/app.js"></script>
+<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+<script src="../../js/jquery-2.2.3.min.js"></script>
+
+<script>
+
+    $(function(){
+        /*公共部分
+         * 导航栏
+         * footer CopyRight
+         */
+        $(".header").load("../header.html");
+
+    });
+    const userId = app.getUrlParam("userId");
+
+    //JavaScript代码区域
+    layui.use('element', function(){
+        var element = layui.element;
+    });
+    layui.use(['form', 'layedit', 'laydate'], function(){
+        var form = layui.form
+            ,layer = layui.layer
+            ,layedit = layui.layedit
+            ,laydate = layui.laydate;
+
+        if (userId != null&&''!=userId){
+            axios.get(app.apiServerUrl + '/user/' + userId,{
+                headers:{
+                    token:"wonder4work"
+                }
+            })
+                .then(function (res) {
+                    var result = res.data;
+                    var data = result.data;
+                    if (result.status == 200){
+                        form.render(
+                            form.val('example', {
+                                "username": data.username // "name": "value"
+                                ,"password": data.password
+                                ,"nickname": data.nickname
+                                ,"email": data.email
+                                ,"mobile": data.mobile
+                                ,"sex": data.sex
+                            })
+                        );
+                    }
+                });
+        }
+
+
+        //创建一个编辑器
+        var editIndex = layedit.build('LAY_demo_editor');
+
+        //自定义验证规则
+        form.verify({
+            username: function(value){
+                if(value.length < 3){
+                    return '至少得3个字符啊';
+                }
+            }
+            ,pass: [
+                /^[\S]{6,12}$/
+                ,'密码必须6到12位，且不能出现空格'
+            ]
+            ,content: function(value){
+                layedit.sync(editIndex);
+            }
+        });
+
+
+        //监听提交
+        form.on('submit(demo1)', function(data){
+            var data = data.field;
+            // console.log(data)
+            var url = app.apiServerUrl+'/user/insert';
+
+            if (userId!=null&&''!=userId){
+                url = app.apiServerUrl + '/user/update?userId='+userId;
+            }
+
+            axios.post(url,data,{
+                headers:{
+                    token:"wonder4work"
+                }
+            }).then(function (response) {
+                // console.log(response)
+                if (response.data.status == 200){
+                    layer.alert("提交成功",{
+                        title: '提交成功'
+                    })
+                }else {
+                    layer.alert(response.data.msg,{
+                        title: response.msg
+                    })
+                }
+            });
+            return false;
+        });
+
+        //表单赋值
+        layui.$('#LAY-component-form-setval').on('click', function(){
+            form.val('example', {
+                "username": "" // "name": "value"
+                ,"password": "123456"
+                ,"nickname": "王老五"
+                ,"email": "136000@qq.com"
+                ,"mobile": "13600000000"
+                ,"sex": "2"
+            });
+            $("#passtip").show();
+            return false;
+        });
+
+        // //表单取值
+        // layui.$('#LAY-component-form-getval').on('click', function(){
+        //     var data = form.val('example');
+        //     alert(JSON.stringify(data));
+        // });
+
+    });
+
+</script>
+</body>
+</html>

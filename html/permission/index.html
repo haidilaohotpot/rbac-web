@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>通用后台管理系统</title>
+    <link rel="stylesheet" href="../../layui/css/layui.css">
+    <style type="text/css">
+        /* 防止下拉框的下拉列表被隐藏---必须设置--- */
+        .layui-table-cell {            overflow: visible !important;        }
+        /* 使得下拉框与单元格刚好合适 */
+        td .layui-form-select{
+            margin-top: -10px;
+            margin-left: -15px;
+            margin-right: -15px;
+        }
+        /*解决下拉框被表格覆盖样式问题*/
+        .layui-form-select dl {
+            z-index: 9999;
+        }
+        .layui-table-box {
+            overflow: visible
+        }
+        .layui-table-body{
+            overflow:visible;
+        }
+    </style>
+</head>
+<body class="layui-layout-body" >
+<div class="layui-layout layui-layout-admin">
+    <div class="header">
+
+    </div>
+
+
+
+    <div class="layui-body ">
+
+        <div class="layui-row">
+            <div class="layui-col-xs3">
+                <div class="grid-demo grid-demo-bg1">
+                    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+                        <legend>权限树</legend>
+                    </fieldset>
+
+                    <div id="test7" class="demo-tree"></div>
+
+                </div>
+            </div>
+            <div class="layui-col-xs9">
+                <div class="grid-demo">
+                    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+                    <legend>权限列表</legend>
+                    </fieldset>
+                    <div class="demoTable">
+                        <div class="layui-inline">
+                            <input class="layui-input" name="name" placeholder="请输入权限名" id="demoReload" autocomplete="off">
+                        </div>
+                        <button class="layui-btn" data-type="reload">搜索</button>
+                    </div>
+
+
+                    <script  type="text/html" id="permissionType">
+                        <select name="interest" lay-filter="ptype">
+                            <option value="1" {{ d.type == 1 ? 'selected' : '' }}>菜单</option>
+                            <option value="2" {{ d.type == 2 ? 'selected' : '' }}>按钮</option>
+                            <option value="3" {{ d.type == 3 ? 'selected' : '' }}>其他</option>
+                        </select>
+                    </script>
+
+
+                    <table class="layui-hide" id="permissionList" lay-filter="permissionList"></table>
+                    <script type="text/html" id="barDemo">
+                        <a class="layui-btn layui-btn-xs" lay-event="edit">详情</a>
+                        <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="update">更新</a>
+                    </script>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © wonder4work.com - 系统后台管理模板
+    </div>
+</div>
+<script src="../../layui/layui.js"></script>
+<script src="../../js/app.js"></script>
+<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+<script src="../../js/jquery-2.2.3.min.js"></script>
+<script>
+
+    $(function(){
+        /*公共部分
+         * 导航栏
+         * footer CopyRight
+         */
+        $(".header").load("../header.html");
+
+    });
+    //JavaScript代码区域
+    layui.use('element', function(){
+        var element = layui.element;
+    });
+    layui.use(['form','table','tree', 'util'], function(){
+        var tree = layui.tree
+            ,layer = layui.layer
+            ,util = layui.util
+            ,table = layui.table
+            ,form = layui.form
+
+        axios.get(app.apiServerUrl+'/permission/list',{
+            headers:{
+                token:"wonder4work"
+            }
+        }).then(function (response) {
+            // console.log(response)
+            var result = response.data;
+
+            if (response.data.status == 200){
+
+                var result = result.data;
+                var permissionList = app.permissionListFormat(app.getPermissionArrData(result));
+
+                var data = app.buildTree(permissionList,'id','parentId');
+
+                //开启复选框
+                tree.render({
+                    elem: '#test7'
+                    , data: data
+                    , id: 'demoId1'
+                    , edit: ['add']
+                    ,operate: function(obj){
+                        var type = obj.type; //得到操作类型：add、edit、del
+                        var data = obj.data; //得到当前节点的数据
+                        var elem = obj.elem; //得到当前节点元素
+                        var id = data.id; //得到节点索引
+                        if(type === 'add'){ //增加节点
+                            window.location.href = 'add.html?parentId='+id;
+                        }
+                    }
+                });
+
+            }else {
+                layer.alert(response.data.msg,{
+                    title: response.msg
+                })
+            }
+        });
+
+
+        table.render({
+            elem: '#permissionList',
+            id:"permissionList"
+            ,url: window.app.apiServerUrl + '/permission/query?queryText='
+            ,headers:{
+                token:"wonder4work"
+            }
+            ,parseData: function(res){ //res 即为原始返回的数据
+                console.log(res)
+                return {
+                    "status": res.status, //解析接口状态
+                    "msg": res.msg, //解析提示文本
+                    "page": res.data.page,
+                    "total": res.data.records,
+                    // "records": res.data.records,
+                    "data": res.data.rows //解析数据列表
+                };
+            }
+            ,toolbar: '#toolbarDemo'
+            ,request: {
+                page:1
+                ,limitName: 'pageSize'
+            }
+            ,response: {
+                statusName: 'status' //规定数据状态的字段名称，默认：code
+                ,statusCode: 200 //规定成功的状态码，默认：0
+                ,msgName: 'msg' //规定状态信息的字段名称，默认：msg
+                ,countName: 'total' //规定数据总数的字段名称，默认：count
+                ,dataName: 'data' //规定数据列表的字段名称，默认：data
+            }
+            ,title: '权限列表'
+            ,cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                ,{field:'permissionId', title:'ID', width:60, fixed: 'left', unresize: true, sort: true, totalRowText: '合计'}
+                ,{field:'name', title:'权限名', width:80, edit: 'text' }
+                ,{field:'icon', title:'图标', width:120, edit: 'text'}
+                ,{field:'url', title:'路径', width:120, edit: 'text'}
+                ,{field:'type', title:'类型', width:80, templet:'#permissionType'}
+                ,{field:'status', title:'状态', width:80, templet:function (res) {
+                        var status = res.status;
+                        if (res.status ==1 )
+                            return '<button class="layui-btn layui-btn-sm layui-btn-radius layui-btn-normal"">正常</button>';
+                        else
+                            return '<button class="layui-btn layui-btn-sm layui-btn-radius layui-btn-danger"">禁用</button>';
+                    }}
+
+                ,{field:'createTime', title:'创建时间', width:100,sort: true ,templet:function (res) {
+                        return util.toDateString(res.createTime,'yyyy-MM-dd')
+                }}
+                ,{field:'updateTime', title:'更新时间', width:100,sort: true ,templet:function (res) {
+                        return util.toDateString(res.createTime,'yyyy-MM-dd')
+                }}
+                ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:120}
+            ]]
+            ,page: true
+        });
+
+// 搜索
+        var $ = layui.$, active = {
+            reload: function(){
+                var demoReload = $('#demoReload');
+                console.log(demoReload.val())
+                // //执行重载
+                table.reload('permissionList', {
+                    url:window.app.apiServerUrl + '/permission/query',
+                    headers:{
+                      token:"wonder4work"
+                    },
+                    page: {
+                        page: 1 //重新从第 1 页开始
+                    }
+                    ,where: {
+                        queryText: demoReload.val()
+                    }
+                }, 'data');
+            }
+        };
+
+        $('.demoTable .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+        //状态改变
+        form.on('select(ptype)', function (data) {//修改类型
+            var elem = $(data.elem);
+            var trElem = elem.parents('tr');
+            var tableData = table.cache['permissionList'];
+            // 更新到表格的缓存数据中，才能在获得选中行等等其他的方法中得到更新之后的值
+            // tableData[trElem.data('index')][elem.attr('name')] = data.value;
+            tableData[trElem.data('index')].type = data.value;
+        });
+
+
+
+        //监听行工具事件
+        table.on('tool(permissionList)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'edit'){
+                layer.alert('edit')
+            }
+            else if(obj.event === 'update'){
+                var permission = {
+
+                };
+                permission.icon = data.icon;
+                permission.name = data.name;
+                permission.parentId = data.parentId;
+                permission.type = data.type;
+                permission.url = data.url;
+                var permissionId = data.permissionId;
+                axios.post(app.apiServerUrl+'/permission/update?permissionId='+permissionId,permission,{
+                    headers:{
+                        token:"wonder4work"
+                    }
+                }).then(function (response) {
+                    // console.log(response)
+                    if (response.data.status == 200){
+                        layer.alert("已更新",{
+                            title: '已更新'
+                        })
+
+                        table.reload('permissionList', {
+                            where: data.field, //设定异步数据接口的额外参数
+                            page: 1
+                        });
+                    }else {
+                        layer.alert(response.data.msg,{
+                            title: response.msg
+                        })
+                    }
+                });
+
+            }
+        });
+
+    });
+
+
+</script>
+</body>
+</html>

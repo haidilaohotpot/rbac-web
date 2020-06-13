@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>通用后台管理系统</title>
+    <link rel="stylesheet" href="../../layui/css/layui.css">
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="header">
+
+    </div>
+
+
+    <div class="layui-body">
+        <blockquote class="layui-elem-quote layui-text">
+            <strong><span style="color: red">添加权限</span></strong>
+        </blockquote>
+
+        <form class="layui-form" action=""  lay-filter="example">
+            <div class="layui-form-item">
+                <label class="layui-form-label">权限名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" lay-verify="required|name" autocomplete="off" placeholder="请输入权限名" class="layui-input">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">图标</label>
+                <div class="layui-input-block">
+                    <input type="text" name="icon"  autocomplete="off" placeholder="请输入图标地址" class="layui-input">
+                </div>
+            </div>
+
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">URL</label>
+                <div class="layui-input-block">
+                    <input type="text" name="url"  autocomplete="off" placeholder="请输入url地址" class="layui-input">
+                </div>
+            </div>
+
+
+            <div class="layui-form-item">
+                <label class="layui-form-label">类型</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="type" value="1" title="菜单" >
+                    <input type="radio" name="type" value="2" title="按钮">
+                    <input type="radio" name="type" value="3" title="其他" checked="">
+                </div>
+            </div>
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    <button type="button" onclick="window.location.href='index.html'" class="layui-btn layui-btn-primary">返回权限列表</button>
+                    <button type="submit" class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+                    <!--<button type="button" class="layui-btn layui-btn-normal" id="LAY-component-form-getval">取值</button>-->
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © wonder4work.com - 系统后台管理模板
+    </div>
+</div>
+<script src="../../layui/layui.js"></script>
+<script src="../../js/app.js"></script>
+<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+<script src="../../js/jquery-2.2.3.min.js"></script>
+
+<script>
+
+    $(function(){
+        /*公共部分
+         * 导航栏
+         * footer CopyRight
+         */
+        $(".header").load("../header.html");
+
+    });
+
+    const parentId = app.getUrlParam("parentId");
+
+    //JavaScript代码区域
+    layui.use('element', function(){
+        var element = layui.element;
+    });
+    layui.use(['form', 'layedit', 'laydate'], function(){
+        var form = layui.form
+            ,layer = layui.layer
+            ,layedit = layui.layedit
+            ,laydate = layui.laydate;
+
+        //自定义验证规则
+        form.verify({
+            name: function(value){
+                if(value.length < 3){
+                    return '至少得3个字符啊';
+                }
+            }
+        });
+
+        //监听提交
+        form.on('submit(demo1)', function(data){
+            var data = data.field;
+            // console.log(data)
+            var url = app.apiServerUrl+'/permission/insert';
+
+            data.parentId = parentId;
+            if (parentId==null || ""==parentId|| undefined == parentId){
+                return false;
+            } else{
+                axios.post(url,data,{
+                    headers:{
+                        token:"wonder4work"
+                    }
+                }).then(function (response) {
+                    // console.log(response)
+                    if (response.data.status == 200){
+                        layer.alert("提交成功",{
+                            title: '提交成功'
+                        })
+                    }else {
+                        layer.alert(response.data.msg,{
+                            title: response.msg
+                        })
+                    }
+                });
+            }
+            return false;
+        });
+
+
+    });
+
+</script>
+</body>
+</html>

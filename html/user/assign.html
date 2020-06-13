@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>通用后台管理系统</title>
+    <link rel="stylesheet" href="../../layui/css/layui.css">
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="header">
+
+    </div>
+
+
+    <div class="layui-body">
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+            <legend>重新分配角色</legend>
+        </fieldset>
+        <div id="roleList" class="demo-transfer"></div>
+
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © wonder4work.com - 系统后台管理模板
+    </div>
+</div>
+<script src="../../layui/layui.js"></script>
+<script src="../../js/app.js"></script>
+<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+<script src="../../js/jquery-2.2.3.min.js"></script>
+<script>
+
+    $(function(){
+        /*公共部分
+         * 导航栏
+         * footer CopyRight
+         */
+        $(".header").load("../header.html");
+
+    });
+    const userId = app.getUrlParam('userId');
+
+    const username = app.getUrlParam('username');
+
+    //JavaScript代码区域
+    layui.use('element', function(){
+        var element = layui.element;
+    });
+
+    layui.use(['transfer', 'layer', 'util'], function(){
+        var $ = layui.$
+            ,transfer = layui.transfer
+            ,layer = layui.layer
+            ,util = layui.util;
+
+        //数据
+        var data = [];
+        var unAssignRoles = [];
+        var assignRoles = [];
+
+        // 获取此用户的角色信息
+        if (userId != null&&''!=userId){
+            axios.get(app.apiServerUrl + '/role/list/',{
+                headers:{
+                    token:"wonder4work"
+                }
+            }).then(function (result) {
+                unAssignRoles = result.data.data;
+            })
+
+            axios.get(app.apiServerUrl + '/user/assign/' + userId,{
+                headers:{
+                    token:"wonder4work"
+                }
+            }).then(function (result) {
+                // unAssignRoles = result.data.data.unAssignRoles;
+                var ar = result.data.data.assignRoles;
+                ar.forEach(function (item) {
+                    assignRoles.push(item.roleId)
+                })
+                // console.log(assignRoles);
+                //穿梭时的回调
+                transfer.render({
+                    elem: '#roleList'
+                    ,showSearch:true
+                    ,data: unAssignRoles
+                    ,value: assignRoles
+                    ,parseData: function(res){
+                        return {
+                            "value": res.roleId //数据值
+                            ,"title": res.name //数据标题
+                        }
+                    }
+                    ,title: [username+'未分配的角色', username+'已分配的角色']
+                    ,onchange: function(obj, index){
+                        var arr = ['左边', '右边'];
+                        // 左分配  右取消
+                        var roleArr = [];
+                        obj.forEach(function (item) {
+                            roleArr.push(item.value);
+                        });
+                        if (index ==0 ){
+                            axios.post(app.apiServerUrl+'/user/doAssign?userId='+userId,roleArr,{
+                                headers:{
+                                    token:"wonder4work"
+                                }
+                            }).then(function (response) {
+                                // console.log(response)
+                                if (response.data.status == 200){
+                                    layer.alert("已分配",{
+                                        title: '信息'
+                                    })
+                                }else {
+                                    layer.alert(response.data.msg,{
+                                        title: response.msg
+                                    })
+                                }
+                            });
+                        }else if(index == 1){
+                            axios.post(app.apiServerUrl+'/user/cancelAssign?userId='+userId,roleArr,{
+                                headers:{
+                                    token:"wonder4work"
+                                }
+                            }).then(function (response) {
+                                // console.log(response)
+                                if (response.data.status == 200){
+                                    layer.alert("已取消",{
+                                        title: '信息'
+                                    })
+                                }else {
+                                    layer.alert(response.data.msg,{
+                                        title: response.msg
+                                    })
+                                }
+                            });
+                        }else{
+                            layer.alert("请选择",{
+                                title: '信息'
+                            })
+                        }
+
+                    }
+                })
+            });
+
+        }
+
+    });
+
+</script>
+</body>
+</html>

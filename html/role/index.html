@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>通用后台管理系统</title>
+    <link rel="stylesheet" href="../../layui/css/layui.css">
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header" style="background-color:black">
+        <div class="layui-logo">通用后台管理系统</div>
+        <!-- 头部区域（可配合layui已有的水平导航） -->
+        <!--<ul class="layui-nav layui-layout-left">
+            <li class="layui-nav-item"><a href="">控制台</a></li>
+            <li class="layui-nav-item"><a href="">商品管理</a></li>
+            <li class="layui-nav-item">
+                <a href="javascript:;">其它系统</a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">邮件管理</a></dd>
+                    <dd><a href="">消息管理</a></dd>
+                    <dd><a href="">授权管理</a></dd>
+                </dl>
+            </li>
+        </ul>-->
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item">
+                <a href="javascript:;">
+                    <img src="../../images/face.jpg" class="layui-nav-img">
+                    wonder4work
+                </a>
+                <dl class="layui-nav-child">
+                    <dd><a href="">基本资料</a></dd>
+                    <dd><a href="">安全设置</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item"><a href="">退出登录</a></li>
+        </ul>
+    </div>
+
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree"  lay-filter="permissionList">
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a class="" href="javascript:;">会员管理</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="../user/index.html">用户管理</a></dd>
+                        <dd><a href="javascript:;">角色管理</a></dd>
+                        <dd><a href="../permission/index.html">权限管理</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:;">网站管理</a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="javascript:;">流量统计</a></dd>
+                        <dd><a href="javascript:;">登录日志</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item"><a href="javascript:;">系统设置</a></li>
+                <li class="layui-nav-item"><a href="javascript:;">相关文档</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <fieldset class="layui-elem-field layui-field-title" style="margin-top: 30px;">
+        </fieldset>
+        <div class="demoTable">
+            <div class="layui-inline">
+                <input class="layui-input" name="name" placeholder="请输入角色名" id="demoReload" autocomplete="off">
+            </div>
+            <button class="layui-btn" id="search" data-type="reload">搜索</button>
+            <div class="layui-inline">
+                <input class="layui-input" name="roleName" id="roleName"  placeholder="请输入角色名" autocomplete="off">
+            </div>
+            <button type="button" id="add" class="layui-btn">
+                <i class="layui-icon">&#xe608;</i> 添加新角色
+            </button>
+        </div>
+
+        <table class="layui-hide" id="roleList" lay-filter="roleList"></table>
+
+        <script type="text/html" id="toolbarDemo">
+            <!--<div class="layui-btn-container">-->
+                <!--<button type="button" class="layui-btn" lay-event="add">-->
+                    <!--<i class="layui-icon">&#xe608;</i> 添加新角色-->
+                <!--</button>-->
+            <!--</div>-->
+
+        </script>
+        <script type="text/html" id="barDemo">
+            <a class="layui-btn layui-btn-xs" lay-event="edit">更新角色</a>
+            <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="assign">授权</a>
+        </script>
+    </div>
+
+    <div class="layui-footer">
+        <!-- 底部固定区域 -->
+        © wonder4work.com - 系统后台管理模板
+    </div>
+</div>
+<script src="../../layui/layui.js"></script>
+<script src="../../js/app.js"></script>
+<script src="https://cdn.staticfile.org/axios/0.18.0/axios.min.js"></script>
+<script src="../../js/jquery-2.2.3.min.js"></script>
+<script>
+
+    $(function(){
+        /*公共部分
+         * 导航栏
+         * footer CopyRight
+         */
+        $(".header").load("../header.html");
+
+    });
+
+    //JavaScript代码区域
+    layui.use('element', function(){
+        var element = layui.element;
+    });
+
+    layui.use(['util','table'], function(){
+        var table = layui.table;
+        var util = layui.util;
+        table.render({
+            elem: '#roleList'
+            ,url: window.app.apiServerUrl + '/role/query?queryText='
+            ,headers:{
+                token:"wonder4work"
+            }
+            ,parseData: function(res){ //res 即为原始返回的数据
+                console.log(res)
+                return {
+                    "status": res.status, //解析接口状态
+                    "msg": res.msg, //解析提示文本
+                    // "page": res.data.page,
+                    "total": res.data.records,
+                    // "records": res.data.records,
+                    "data": res.data.rows //解析数据列表
+                };
+            }
+            ,request: {
+                page:1
+                ,limitName: 'pageSize'
+            }
+            ,response: {
+                statusName: 'status' //规定数据状态的字段名称，默认：code
+                ,statusCode: 200 //规定成功的状态码，默认：0
+                ,msgName: 'msg' //规定状态信息的字段名称，默认：msg
+                ,countName: 'total' //规定数据总数的字段名称，默认：count
+                ,dataName: 'data' //规定数据列表的字段名称，默认：data
+            }
+            ,toolbar: '#toolbarDemo'
+            ,title: '角色列表'
+            ,totalRow: false
+            ,cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                ,{field:'roleId', title:'ID', width:150, fixed: 'left', unresize: true, sort: true, totalRowText: '合计'}
+                ,{field:'name', title:'角色', width:120, edit: 'text'}
+                ,{field:'status', title:'状态', width:120 ,templet:function (res) {
+                    if (res.status ==1 )
+                       return '<button class="layui-btn layui-btn-sm layui-btn-radius layui-btn-normal"">正常</button>';
+                    else
+                        return '<button class="layui-btn layui-btn-sm layui-btn-radius layui-btn-danger"">禁用</button>';
+                    }}
+                ,{field:'createTime', title:'创建时间', width:120,sort: true ,templet:function (res) {
+                        return util.toDateString(res.createTime,'yyyy-MM-dd');
+                }}
+                ,{field:'updateTime', title:'更新时间', width:120, sort:true ,templet:function (res) {
+                        return util.toDateString(res.updateTime,'yyyy-MM-dd');
+                }}
+                ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
+            ]]
+            ,page: true
+        });
+
+        // 搜索
+        var $ = layui.$, active = {
+            reload: function(){
+                var demoReload = $('#demoReload');
+                console.log(demoReload.val())
+                // //执行重载
+                table.reload('roleList', {
+                    url:window.app.apiServerUrl + '/role/query',
+                    headers:{
+                        token:"wonder4work"
+                    },
+                    page: {
+                        page: 1 //重新从第 1 页开始
+                    }
+                    ,where: {
+                        queryText: demoReload.val()
+                    }
+                }, 'data');
+            }
+        };
+
+        $('#search').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+        $('#add').on('click', function(){
+            var roleName = $('#roleName').val();
+            var role = {};
+            role.name = roleName;
+            var url = app.apiServerUrl + '/role/insert';
+            axios.post(url,role,{
+                headers:{
+                    token:"wonder4work"
+                }
+            }).then(function (response) {
+                // console.log(response)
+                if (response.data.status == 200){
+                    layer.msg("添加成功");
+                    table.reload('roleList', {
+                        url:window.app.apiServerUrl + '/role/query?queryText=',
+                        headers:{
+                            token:"wonder4work"
+                        },
+                        page: {
+                            page: 1 //重新从第 1 页开始
+                        }
+                    }, 'data');
+                }else {
+                    layer.alert(response.data.msg,{
+                        title: response.msg
+                    })
+                }
+            });
+
+        });
+
+        //监听行工具事件
+        table.on('tool(roleList)', function(obj){
+            var data = obj.data;
+            var role = {};
+            role.name = data.name;
+            var roleId = data.roleId;
+            if(obj.event === 'edit'){
+                axios.post(app.apiServerUrl+'/role/update?roleId='+roleId,role,{
+                    headers:{
+                        token:"wonder4work"
+                    }
+                }).then(function (response) {
+                    // console.log(response)
+                    if (response.data.status == 200){
+                        layer.alert("已更新",{
+                            title: '信息'
+                        })
+                    }else {
+                        layer.alert(response.data.msg,{
+                            title: response.msg
+                        })
+                    }
+                });
+
+            }
+            else if(obj.event === 'assign'){
+                window.location.href = 'assign.html?roleId='+data.roleId+'&name='+data.name
+            }
+        });
+
+
+    });
+
+</script>
+</body>
+</html>
